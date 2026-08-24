@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 type Upgrade = {
   nome: string,
@@ -13,6 +13,7 @@ type Upgrade = {
 
 export default function Home() {
   const [dinheiro, setDinheiro] = useState(0)
+  const [dinheiroPorSegundo, setDinheiroPorSegundo] = useState(0)
   const [valorClique, setValorClique] = useState(1)
   const [upgrades, setUpgrades] = useState<Upgrade[]>([
 
@@ -62,12 +63,26 @@ export default function Home() {
     }
   ])
 
+  useEffect(() => {
+    const intervalo = setInterval(() => {
+      setDinheiro((dinheiroAtual) => {
+        return dinheiroAtual + dinheiroPorSegundo
+      })
+    }, 1000)
+
+    return () => clearInterval(intervalo)
+  }, [dinheiroPorSegundo])
+
+  const calcularPreco = (upgrade: Upgrade) =>{
+    return upgrade.precoInicial * upgrade.multiplicador ** upgrade.nivel
+  }
+
   const clique = () => {
     setDinheiro(dinheiro + valorClique)
   }
 
   const comprar = (upgrade: Upgrade) => {
-    const preco = upgrade.precoInicial * upgrade.multiplicador ** upgrade.nivel
+    const preco = calcularPreco(upgrade)
 
     if (dinheiro < preco) {
       return
@@ -77,6 +92,10 @@ export default function Home() {
 
     if (upgrade.tipo === "clique") {
       setValorClique(valorClique + upgrade.aumento)
+    }
+
+    if (upgrade.tipo === "passivo") {
+      setDinheiroPorSegundo(dinheiroPorSegundo + upgrade.aumento)
     }
 
     setUpgrades(upgrades.map((item) => {
@@ -102,8 +121,7 @@ export default function Home() {
 
       <div className="w-1/4 flex flex-col border-l border-black">
         {upgrades.map((upgrade) => {
-          const preco = upgrade.precoInicial * upgrade.multiplicador ** upgrade.nivel
-
+          const preco = calcularPreco(upgrade)
           return (
             <button key={upgrade.nome} onClick={() => comprar(upgrade)} className="w-full border border-black h-24">
               {upgrade.nome}<br />
