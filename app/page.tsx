@@ -13,6 +13,7 @@ type Upgrade = {
 
 export default function Home() {
   const [dinheiro, setDinheiro] = useState(0)
+  const [dinheiroVisual, setDinheiroVisual] = useState(0)
   const [dinheiroPorSegundo, setDinheiroPorSegundo] = useState(0)
   const [valorClique, setValorClique] = useState(1)
   const [upgrades, setUpgrades] = useState<Upgrade[]>([
@@ -73,8 +74,34 @@ export default function Home() {
     return () => clearInterval(intervalo)
   }, [dinheiroPorSegundo])
 
-  const calcularPreco = (upgrade: Upgrade) =>{
+  useEffect(() => {
+
+    const intervalo = setInterval(() => {
+
+      setDinheiroVisual((valorAtual) => {
+
+        if (valorAtual >= dinheiro) {
+          return valorAtual
+        }
+
+        const diferenca = dinheiro - valorAtual
+        const aumento = Math.ceil(diferenca / 10)
+
+        return Math.min(valorAtual + aumento, dinheiro)
+      })
+
+    }, 50)
+
+    return () => clearInterval(intervalo)
+
+  }, [dinheiro])
+
+  const calcularPreco = (upgrade: Upgrade) => {
     return upgrade.precoInicial * upgrade.multiplicador ** upgrade.nivel
+  }
+
+  const formatarDinheiro = (valor: number) => {
+    return Math.floor(valor).toLocaleString("pt-BR")
   }
 
   const clique = () => {
@@ -110,22 +137,25 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-white flex">
-      <div className="w-3/4 flex flex-col gap-3 items-center justify-center">
-        <button onClick={clique} className="bg-blue-500 text-white px-24 py-12 rounded text-2xl font-bold">
+    <main className="min-h-screen bg-[#2C2F33] flex">
+      <div className="w-3/4 text-[#ffffff] flex flex-col gap-3 items-center justify-center">
+        <button onClick={clique} className="bg-blue-500 px-24 py-12 rounded text-2xl font-bold">
           +{valorClique} $
         </button>
 
-        <p className="text-black font-bold">Dinheiro: $ {dinheiro.toFixed(2)}</p>
+        <p>Dinheiro p/s: $ {formatarDinheiro(dinheiroPorSegundo)}</p>
+
+        <p className="font-bold">Dinheiro: $ {formatarDinheiro(dinheiroVisual)}</p>
       </div>
 
-      <div className="w-1/4 flex flex-col border-l border-black">
+      <div className="w-1/4 text-[#ffffff] flex flex-col border-l border-black">
         {upgrades.map((upgrade) => {
-          const preco = calcularPreco(upgrade)
+          const preco = formatarDinheiro(calcularPreco(upgrade))
           return (
             <button key={upgrade.nome} onClick={() => comprar(upgrade)} className="w-full border border-black h-24">
               {upgrade.nome}<br />
-              $ {preco.toFixed(2)}
+              $ {preco}<br />
+              lvl: {upgrade.nivel}
             </button>
           )
         })}
